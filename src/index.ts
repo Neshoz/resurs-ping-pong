@@ -1,5 +1,4 @@
 import { app } from "./app";
-import { getNextPlayerElo } from "./util/elo";
 
 (async () => {
   await app.start();
