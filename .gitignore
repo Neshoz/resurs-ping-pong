@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+.yarn/cache
+.yarn/install-state.gz
+
+# Testing
+**/*/coverage
+
+# Production
+**/*/dist
+
+# Debug
+yarn-debug.log*
+yarn-error.log*
+
+# Env files
+.env
+.env.test
+
+# TypeScript
+*.tsbuildinfo
