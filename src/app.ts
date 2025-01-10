@@ -1,5 +1,5 @@
 import { App } from "@slack/bolt";
-import { startMatch } from "./commands/start-match";
+import { oneVsOne } from "./commands/oneVsOne";
 
 export const app = new App({
   appToken: process.env.SLACK_APP_TOKEN,
@@ -9,4 +9,4 @@ export const app = new App({
   port: 3000,
 });
 
-app.command("/start-match", startMatch);
+app.command("/1v1", oneVsOne);

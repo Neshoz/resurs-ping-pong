@@ -33,6 +33,7 @@ export const matchesTable = pgTable("matches", {
   })
     .notNull()
     .default(sql`current_timestamp`),
+  result: text("result"),
   duration: numeric("duration"),
 });
 
