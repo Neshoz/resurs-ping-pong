@@ -1,5 +1,7 @@
 import { App } from "@slack/bolt";
-import { oneVsOne } from "./commands/oneVsOne";
+import { oneVsOneCommand } from "./commands/oneVsOne";
+import { winner } from "./commands/winner";
+import { memberJoinedChannelEvent } from "./events/member-joined-channel";
 
 export const app = new App({
   appToken: process.env.SLACK_APP_TOKEN,
@@ -9,4 +11,7 @@ export const app = new App({
   port: 3000,
 });
 
-app.command("/1v1", oneVsOne);
+oneVsOneCommand(app);
+app.command("/winner", winner);
+
+memberJoinedChannelEvent(app);

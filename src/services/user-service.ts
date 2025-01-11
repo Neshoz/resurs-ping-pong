@@ -1,8 +1,12 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "../db";
 import { usersTable } from "../db/schema";
 
-export const findUserByName = async (name: string) => {
+export const findUsersById = async (...ids: string[]) => {
+  return db.select().from(usersTable).where(inArray(usersTable.id, ids));
+};
+
+export const findUserBySlackName = async (name: string) => {
   const [user] = await db
     .select()
     .from(usersTable)
