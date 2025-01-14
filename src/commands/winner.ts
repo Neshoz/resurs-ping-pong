@@ -1,10 +1,16 @@
 import { InvalidCommandError } from "../util/error";
 import * as userService from "../services/user-service";
 import * as matchService from "../services/match-service";
-import { Command } from "./types";
 import { getNextPlayerElo } from "../util/elo";
+import { Command } from "./types";
 
-export const winner: Command = async ({ ack, say, command, logger }) => {
+export const winner: Command = async ({
+  ack,
+  say,
+  command,
+  client,
+  logger,
+}) => {
   try {
     await ack();
 
@@ -15,6 +21,17 @@ export const winner: Command = async ({ ack, say, command, logger }) => {
       );
     }
     */
+
+    const r = await matchService.findCurrentMatchByUserSlackId(command.user_id);
+
+    const dm = await client.conversations.open({
+      users: command.user_id,
+    });
+
+    await client.chat.postMessage({
+      channel: dm.channel!.id!,
+      text: "This is a text message",
+    });
 
     const [winnerName, result] = command.text.split(" ");
 

@@ -8,17 +8,16 @@ export interface EloDiff {
 }
 
 export const getNextPlayerElo = (
-  playerOneRating: number,
-  playerTwoRating: number,
+  player: number,
+  opponent: number,
   gameResult: 0 | 1
 ): EloDiff => {
-  const myChanceToWin =
-    1 /
-    (1 + Math.pow(BASE_EXPONENT, (playerTwoRating - playerOneRating) / SCALE));
+  const playerChanceToWin =
+    1 / (1 + Math.pow(BASE_EXPONENT, (opponent - player) / SCALE));
 
-  const delta = Math.round(K_FACTOR * (gameResult - myChanceToWin));
+  const delta = Math.round(K_FACTOR * (gameResult - playerChanceToWin));
 
-  const newRating = playerOneRating + delta;
+  const newRating = player + delta;
 
   return {
     newRating,

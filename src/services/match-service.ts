@@ -35,6 +35,33 @@ export const findCurrentMatchByUserId = async (playerId: string) => {
   return match;
 };
 
+export const findCurrentMatchByUserSlackId = (userSlackId: string) => {
+  return db.execute(sql`
+    SELECT
+        current_match.*,
+        json_build_object(
+          'id', player_one.id,
+          'name', player_one.name,
+          'elo', player_one.elo_rank
+        ) AS player_one_details,
+        json_build_object(
+          'id', player_two.id,
+          'name', player_two.name,
+          'elo', player_two.elo_rank
+        ) AS player_two_details
+    FROM users u
+    LEFT JOIN singles_matches AS current_match
+        ON current_match.player_one_id = u.id
+        OR current_match.player_two_id = u.id
+    LEFT JOIN users AS player_one
+        ON current_match.player_one_id = player_one.id
+    LEFT JOIN users AS player_two
+        ON current_match.player_two_id = player_two.id
+    WHERE u.slack_id = ${userSlackId}
+      AND current_match.result IS NULL;
+  `);
+};
+
 export const completeMatch = async ({
   matchId,
   winnerId,
