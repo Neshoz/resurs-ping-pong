@@ -6,6 +6,7 @@ import {
   usersTable,
 } from "../db/schema";
 import { EloDiff } from "../util/elo";
+import { GameResultUser, Match } from "./types";
 
 export const createMatch = async (playerOneId: string, playerTwoId: string) => {
   const [match] = await db
@@ -35,20 +36,40 @@ export const findCurrentMatchByUserId = async (playerId: string) => {
   return match;
 };
 
-export const findCurrentMatchByUserSlackId = (userSlackId: string) => {
-  return db.execute(sql`
+interface FindCurrentMatchReturn {
+  match: Match;
+  playerOne: GameResultUser;
+  playerTwo: GameResultUser;
+}
+
+export const findCurrentMatchByUserSlackId = async (
+  userSlackId: string
+): Promise<{
+  match: {
+    id: string;
+    createdAt: string;
+  };
+  playerOne: GameResultUser;
+  playerTwo: GameResultUser;
+}> => {
+  const result = await db.execute(sql`
     SELECT
-        current_match.*,
+        json_build_object(
+          'id', current_match.id,
+          'createdAt', current_match.created_at
+        ) AS "match",
         json_build_object(
           'id', player_one.id,
           'name', player_one.name,
-          'elo', player_one.elo_rank
-        ) AS player_one_details,
+          'fullName', player_one.name_normalized,
+          'elo', player_one.elo
+        ) AS "playerOne",
         json_build_object(
           'id', player_two.id,
           'name', player_two.name,
-          'elo', player_two.elo_rank
-        ) AS player_two_details
+          'fullName', player_two.name_normalized,
+          'elo', player_two.elo
+        ) AS "playerTwo"
     FROM users u
     LEFT JOIN singles_matches AS current_match
         ON current_match.player_one_id = u.id
@@ -60,34 +81,35 @@ export const findCurrentMatchByUserSlackId = (userSlackId: string) => {
     WHERE u.slack_id = ${userSlackId}
       AND current_match.result IS NULL;
   `);
+
+  // @ts-expect-error
+  return result.rows[0] as Promise<FindCurrentMatchReturn>;
 };
 
 export const completeMatch = async ({
   matchId,
-  winnerId,
+  winner,
+  loser,
   result,
   duration,
-  players,
-  elo,
 }: {
   matchId: string;
-  winnerId: string;
+  winner: {
+    id: string;
+    diff: EloDiff;
+  };
+  loser: {
+    id: string;
+    diff: EloDiff;
+  };
   result: string;
   duration: number;
-  players: {
-    playerOneId: string;
-    playerTwoId: string;
-  };
-  elo: {
-    playerOne: EloDiff;
-    playerTwo: EloDiff;
-  };
 }) => {
   await db.transaction(async (tx) => {
     await tx
       .update(singlesMatchesTable)
       .set({
-        winnerId,
+        winnerId: winner.id,
         result,
         duration: String(duration),
       })
@@ -95,26 +117,26 @@ export const completeMatch = async ({
 
     await tx.insert(usersEloDiffTable).values([
       {
-        eloDiff: String(elo.playerOne.delta),
+        eloDiff: String(winner.diff.delta),
         matchId,
-        userId: players.playerOneId,
+        userId: winner.id,
       },
       {
-        eloDiff: String(elo.playerTwo.delta),
+        eloDiff: String(loser.diff.delta),
         matchId,
-        userId: players.playerTwoId,
+        userId: loser.id,
       },
     ]);
 
     await db
       .update(usersTable)
-      .set({ elo: String(elo.playerOne.newRating) })
-      .where(eq(usersTable.id, players.playerOneId));
+      .set({ elo: String(winner.diff.newRating) })
+      .where(eq(usersTable.id, winner.id));
 
     await db
       .update(usersTable)
-      .set({ elo: String(elo.playerTwo.newRating) })
-      .where(eq(usersTable.id, players.playerTwoId));
+      .set({ elo: String(loser.diff.newRating) })
+      .where(eq(usersTable.id, loser.id));
   });
 };
 
@@ -124,8 +146,12 @@ export const ensurePlayersHaveNoActiveMatches = async (
 ) => {
   const result = await db.execute(sql`
     SELECT 1 FROM singles_matches
-    WHERE player_one_id = ${playerOneId}
-    AND player_two_id = ${playerTwoId}
+    WHERE (
+      player_one_id = ${playerOneId}
+      OR player_one_id = ${playerTwoId}
+      AND player_two_id = ${playerTwoId}
+      OR player_two_id = ${playerOneId}
+    )
     AND result is null
   `);
 

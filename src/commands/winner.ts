@@ -1,8 +1,9 @@
 import { InvalidCommandError } from "../util/error";
-import * as userService from "../services/user-service";
-import * as matchService from "../services/match-service";
-import { getNextPlayerElo } from "../util/elo";
+import * as matchService from "../match/match-service";
 import { Command } from "./types";
+import { createMatchResultAttachment } from "../util/slack";
+import { getMatchResult } from "../match/util";
+import { MATCH_WINNER_WITH_SCORE_REGEX } from "../util/regex";
 
 export const winner: Command = async ({
   ack,
@@ -14,16 +15,15 @@ export const winner: Command = async ({
   try {
     await ack();
 
-    /*
-    if (!MATCH_WINNER_WITH_SCORE_REGEX.test(command.text)) {
+    const regexMatch = command.text.match(MATCH_WINNER_WITH_SCORE_REGEX);
+
+    if (regexMatch === null) {
       throw new InvalidCommandError(
         "Invalid command format, correct format example: /winner @John Doe 3-1"
       );
     }
-    */
 
-    const r = await matchService.findCurrentMatchByUserSlackId(command.user_id);
-
+    /*
     const dm = await client.conversations.open({
       users: command.user_id,
     });
@@ -32,83 +32,24 @@ export const winner: Command = async ({
       channel: dm.channel!.id!,
       text: "This is a text message",
     });
+    */
 
-    const [winnerName, result] = command.text.split(" ");
+    const [, winnerName, result] = regexMatch;
 
-    const winner = await userService.findUserBySlackName(
-      winnerName.substring(1)
-    );
+    const { match, playerOne, playerTwo } =
+      await matchService.findCurrentMatchByUserSlackId(command.user_id);
 
-    const match = await matchService.findCurrentMatchByUserId(winner.id);
-
-    const [playerOne, playerTwo] = await userService.findUsersById(
-      match.playerOneId,
-      match.playerTwoId
-    );
-
-    const playerOneEloDiff = getNextPlayerElo(
-      Number(playerOne.elo),
-      Number(playerTwo.elo),
-      winner.id === playerOne.id ? 1 : 0
-    );
-
-    const playerTwoEloDiff = getNextPlayerElo(
-      Number(playerTwo.elo),
-      Number(playerOne.elo),
-      winner.id === playerTwo.id ? 1 : 0
-    );
-
-    const duration = Date.now() - new Date(match.createdAt).getTime();
+    const { winner, loser } = getMatchResult(playerOne, playerTwo, winnerName);
 
     await matchService.completeMatch({
       matchId: match.id,
-      winnerId: winner.id,
+      winner,
+      loser,
       result,
-      duration,
-      elo: {
-        playerOne: playerOneEloDiff,
-        playerTwo: playerTwoEloDiff,
-      },
-      players: {
-        playerOneId: playerOne.id,
-        playerTwoId: playerTwo.id,
-      },
+      duration: Date.now() - new Date(match.createdAt).getTime(),
     });
 
-    const playerOneWithEloDiff = {
-      ...playerOne,
-      diff: playerOneEloDiff,
-    };
-
-    const playerTwoWithEloDiff = {
-      ...playerTwo,
-      diff: playerTwoEloDiff,
-    };
-
-    const loser =
-      playerOne.id === winner.id ? playerTwoWithEloDiff : playerOneWithEloDiff;
-
-    const winnerWithEloDiff =
-      loser.id === playerOne.id ? playerTwoWithEloDiff : playerOneWithEloDiff;
-
-    await say({
-      attachments: [
-        {
-          title: "Match completed!",
-          text: "Match completed!",
-          fields: [
-            {
-              title: "Winner",
-              value: `${winnerWithEloDiff.normalizedName}, Elo: ${winnerWithEloDiff.diff.newRating} (${winnerWithEloDiff.diff.delta})`,
-            },
-            {
-              title: "Loser",
-              value: `${loser.normalizedName}, Elo: ${loser.diff.newRating} (${loser.diff.delta})`,
-            },
-          ],
-        },
-      ],
-    });
+    await say(createMatchResultAttachment(winner, loser));
   } catch (error) {
     if (error instanceof InvalidCommandError) {
       await say(error.message);

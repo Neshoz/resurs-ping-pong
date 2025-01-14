@@ -1,8 +1,8 @@
 import { App } from "@slack/bolt";
 import { InvalidCommandError } from "../util/error";
 import { USER_MENTION_REGEX } from "../util/regex";
-import * as userService from "../services/user-service";
-import * as matchService from "../services/match-service";
+import * as userService from "../user/user-service";
+import * as matchService from "../match/match-service";
 
 export const oneVsOneCommand = (app: App) =>
   app.command("/1v1", async ({ ack, command, say, logger }) => {

@@ -1,5 +1,5 @@
 import { mainBotChannel } from "../util/core";
-import * as userService from "../services/user-service";
+import * as userService from "../user/user-service";
 import { App } from "@slack/bolt";
 
 export const memberJoinedChannelEvent = (app: App) =>

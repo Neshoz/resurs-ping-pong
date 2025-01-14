@@ -13,7 +13,7 @@ export const usersTable = pgTable("users", {
   slackId: text("slack_id").notNull(),
   name: text("name").notNull().unique(),
   normalizedName: text("name_normalized").notNull().unique(),
-  elo: numeric("elo_rank").notNull(),
+  elo: numeric("elo").notNull(),
   createdAt: timestamp("created_at", {
     withTimezone: true,
     mode: "string",

@@ -1,5 +1,5 @@
 import { app } from "./app";
-import { createUser } from "./services/user-service";
+import { createUser } from "./user/user-service";
 import { mainBotChannel } from "./util/core";
 
 /*
