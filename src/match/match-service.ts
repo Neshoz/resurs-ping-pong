@@ -60,14 +60,14 @@ export const findCurrentMatchByUserSlackId = async (
         ) AS "match",
         json_build_object(
           'id', player_one.id,
-          'name', player_one.name,
-          'fullName', player_one.name_normalized,
+          'slackName', player_one.slack_name,
+          'fullName', player_one.full_name,
           'elo', player_one.elo
         ) AS "playerOne",
         json_build_object(
           'id', player_two.id,
-          'name', player_two.name,
-          'fullName', player_two.name_normalized,
+          'slackName', player_two.slack_name,
+          'fullName', player_two.full_name,
           'elo', player_two.elo
         ) AS "playerTwo"
     FROM users u

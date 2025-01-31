@@ -36,6 +36,8 @@ export const winner: Command = async ({
 
     const [, winnerName, result] = regexMatch;
 
+    console.log(winnerName);
+
     const { match, playerOne, playerTwo } =
       await matchService.findCurrentMatchByUserSlackId(command.user_id);
 

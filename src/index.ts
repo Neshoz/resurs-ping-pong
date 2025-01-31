@@ -1,12 +1,13 @@
 import { app } from "./app";
 import { createUser } from "./user/user-service";
-import { mainBotChannel } from "./util/core";
 
 /*
 createUser({
-  name: "kevin.nemec",
-  normalizedName: "Kevin Nemec",
-  slackId: "U07NLT3FD7V",
+  elo: "1200",
+  email: "kevin.nemec@resurs.se",
+  fullName: "Kevin Nemec",
+  slackId: "U088QAS0F16",
+  slackName: "kevin.nemec",
 });
 */
 
@@ -15,7 +16,7 @@ createUser({
   app.logger.info("Bot is running");
 
   const { channel } = await app.client.conversations.info({
-    channel: "C088U7R0NPN",
+    channel: process.env.SLACK_MAIN_CHANNEL_ID!,
   });
 
   if (!channel) {
@@ -26,9 +27,8 @@ createUser({
   } else {
     app.logger.info("Found ping-pong channel, joining channel.");
     await app.client.conversations.join({
-      channel: channel!.id!,
+      channel: channel.id!,
     });
     app.logger.info("Joined ping-pong channel.");
-    mainBotChannel.set(channel);
   }
 })();

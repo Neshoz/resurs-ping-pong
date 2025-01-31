@@ -1,19 +1,20 @@
 import { eq, inArray } from "drizzle-orm";
 import { db } from "../db";
 import { usersTable } from "../db/schema";
+import { InsertUserBody } from "./types";
 
 export const findUsersById = async (...ids: string[]) => {
   return db.select().from(usersTable).where(inArray(usersTable.id, ids));
 };
 
-export const findUserBySlackName = async (name: string) => {
+export const findUserBySlackName = async (slackName: string) => {
   const [user] = await db
     .select()
     .from(usersTable)
-    .where(eq(usersTable.name, name));
+    .where(eq(usersTable.slackName, slackName));
 
   if (!user) {
-    throw new Error(`User with name ${name} not found.`);
+    throw new Error(`User with slack name ${slackName} not found.`);
   }
 
   return user;
@@ -32,20 +33,15 @@ export const findUserBySlackId = async (slackId: string) => {
   return user;
 };
 
-interface CreateUserArgs {
-  slackId: string;
-  name: string;
-  normalizedName: string;
-}
-
-export const createUser = async (user: CreateUserArgs) => {
+export const createUser = async (user: InsertUserBody) => {
   const [newUser] = await db
     .insert(usersTable)
     .values({
-      elo: "1200",
-      name: user.name,
-      normalizedName: user.normalizedName,
+      elo: user.elo,
+      slackName: user.slackName,
       slackId: user.slackId,
+      fullName: user.fullName,
+      email: user.email,
     })
     .returning();
 

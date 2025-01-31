@@ -10,9 +10,10 @@ import {
 
 export const usersTable = pgTable("users", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
+  fullName: text("full_name").notNull().unique(),
   slackId: text("slack_id").notNull(),
-  name: text("name").notNull().unique(),
-  normalizedName: text("name_normalized").notNull().unique(),
+  slackName: text("slack_name").notNull().unique(),
+  email: text("email").notNull(),
   elo: numeric("elo").notNull(),
   createdAt: timestamp("created_at", {
     withTimezone: true,

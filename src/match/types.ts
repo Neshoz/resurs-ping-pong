@@ -8,6 +8,6 @@ export type Match = z.infer<typeof matchSelectSchema>;
 export type GameResultUser = {
   id: string;
   fullName: string;
-  name: string;
+  slackName: string;
   elo: number;
 };
