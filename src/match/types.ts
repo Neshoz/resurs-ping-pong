@@ -11,3 +11,9 @@ export type GameResultUser = {
   slackName: string;
   elo: number;
 };
+
+export type ChallengeRequest = {
+  opponent: { id: string; slackId: string };
+  challenger: { id: string; slackId: string };
+  accepted: boolean;
+};

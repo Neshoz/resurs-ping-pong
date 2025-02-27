@@ -3,9 +3,11 @@ import { InvalidCommandError } from "../util/error";
 import { USER_MENTION_REGEX } from "../util/regex";
 import * as userService from "../user/user-service";
 import * as matchService from "../match/match-service";
+import { askToChallenge, deleteDM, sendDM } from "../util/slack";
+import { emitter } from "../util/events";
 
 export const oneVsOneCommand = (app: App) =>
-  app.command("/1v1", async ({ ack, command, say, logger }) => {
+  app.command("/1v1", async ({ ack, command, client, say, logger }) => {
     try {
       await ack();
 
@@ -15,12 +17,12 @@ export const oneVsOneCommand = (app: App) =>
         );
       }
 
-      const [playerOne, playerTwo] = await Promise.all([
+      const [reciever, challenger] = await Promise.all([
         userService.findUserBySlackName(command.text.substring(1)),
         userService.findUserBySlackId(command.user_id),
       ]);
 
-      if (playerOne.id === playerTwo.id) {
+      if (reciever.id === challenger.id) {
         throw new InvalidCommandError(
           "You cannot start a match with yourself."
         );
@@ -28,8 +30,8 @@ export const oneVsOneCommand = (app: App) =>
 
       const hasNoActiveMatches =
         await matchService.ensurePlayersHaveNoActiveMatches(
-          playerOne.id,
-          playerTwo.id
+          reciever.id,
+          challenger.id
         );
 
       if (!hasNoActiveMatches) {
@@ -38,9 +40,18 @@ export const oneVsOneCommand = (app: App) =>
         );
       }
 
-      const match = await matchService.createMatch(playerOne.id, playerTwo.id);
+      const resp = await sendDM(reciever.slackId, {
+        text: `Challenge from${challenger.fullName}`,
+        blocks: askToChallenge(reciever, challenger),
+      });
 
-      await say(`Match with id ${match.id} started. GLHF.`);
+      emitter.on("dmSent", () => {
+        deleteDM(resp.channel!, resp.ts!);
+      });
+
+      await sendDM(challenger.slackId, {
+        text: `Challenge sent to <@${reciever.slackId}>`,
+      });
     } catch (error) {
       if (error instanceof InvalidCommandError) {
         await say(error.message);
