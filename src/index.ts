@@ -4,10 +4,10 @@ import { createUser } from "./user/user-service";
 /*
 createUser({
   elo: "1200",
-  email: "kevin.nemec@resurs.se",
-  fullName: "Kevin Nemec",
-  slackId: "U088QAS0F16",
-  slackName: "kevin.nemec",
+  email: "filip.vester@resurs.se",
+  fullName: "Filip Vester",
+  slackId: "U08818TMSJW",
+  slackName: "filip.vester",
 });
 */
 
