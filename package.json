@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "dev": "nodemon",
     "build": "tsc -b",
-    "dev": "bun --watch -r dotenv/config src/index.ts",
     "db:push-migrate": "drizzle-kit push"
   },
   "keywords": [],
@@ -23,6 +23,7 @@
     "@types/pg": "^8.11.10",
     "dotenv": "^16.4.7",
     "drizzle-kit": "^0.30.1",
+    "nodemon": "^3.1.10",
     "typescript": "^5.7.3"
   }
 }

@@ -13,13 +13,3 @@ services:
       interval: 20s
       timeout: 30s
       retries: 10
-
-  pgAdmin:
-    image: dpage/pgadmin4
-    container_name: pgAdmin
-    restart: always
-    ports:
-      - 8888:80
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=root@root.com
-      - PGADMIN_DEFAULT_PASSWORD=root
